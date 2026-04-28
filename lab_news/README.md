@@ -1,78 +1,62 @@
-# Лабораторная работа №2 — Прогноз волатильности DJIA по новостям
+# Прогноз модуля дневной доходности DJIA по новостям
 
-## Описание
+В этой лабораторной работе необходимо принять участие в соревновании курса на Kaggle и построить модель для прогноза модуля дневной доходности индекса Dow Jones Industrial Average на основе новостных заголовков.
 
-Индивидуальная работа. Прогноз дневной волатильности DJIA по новостным заголовкам и ценовой истории. Под волатильностью понимается модуль дневной доходности: `abs_return = |daily_return|`. Решения сабмитятся в Kaggle InClass контест, финальная оценка — по Public LB RMSE.
+Подробное описание задачи, структура данных и правила отправки решений приведены на странице соревнования:
 
-| Параметр | Значение |
-|----------|----------|
-| Раздел программы | 1.6 — NLP в финансах |
-| Датасет | Daily News for Stock Market Prediction (DJIA 2008-08 → 2016-07) |
-| Kaggle контест | [predict-djia-daily-returns-from-news-headlines-pfur](https://www.kaggle.com/competitions/predict-djia-daily-returns-from-news-headlines-pfur) |
-| Задача | Регрессия: прогноз `abs_return ≥ 0` |
-| Метрика | **RMSE** (чем меньше, тем лучше) |
-| Формат | Индивидуально |
+https://www.kaggle.com/competitions/predict-djia-daily-returns-from-news-headlines-pfur
 
-## Данные
+## Задача
 
-Файлы скачиваются со страницы контеста на Kaggle:
+Необходимо предсказать значение `abs_return` для каждой даты тестового периода.
 
-| Файл | Описание |
-|---|---|
-| `train.csv` | 1,610 дней: `Date + abs_return` (2008-08-11 → 2014-12-31) |
-| `test.csv` | 378 дней: `Date` (2015-01-02 → 2016-07-01) — нужно предсказать |
-| `Combined_News_DJIA.csv` | 25 заголовков новостей на каждый день, за весь период |
-| `RedditNews.csv` | Сырые заголовки Reddit r/worldnews с датами |
-| `djia_train.csv` | Цены DJIA (OHLCV) только до 2014-12-31 включительно |
-| `sample_submission.csv` | Шаблон сабмишена (Date, abs_return=0) |
+Тип задачи: **регрессия**.
 
-## Целевая переменная
+Целевая переменная: `abs_return`.
 
-```
-daily_return_t = (close_t − close_{t-1}) / close_{t-1}
-abs_return_t   = |daily_return_t|
-```
+В рамках соревнования `abs_return` определяется как модуль дневной доходности индекса:
 
-## Что нужно предсказать
+$$
+abs\_return_t = |r_t|
+$$
 
-Неотрицательное значение `abs_return` для каждой даты из `test.csv`. Формат сабмишена:
+где дневная доходность рассчитывается по формуле:
 
-```
-Date,abs_return
-2015-01-02,0.0045
-2015-01-05,0.0112
-...
-```
+$$
+r_t = \frac{Close_t - Close_{t-1}}{Close_{t-1}}
+$$
 
-Ровно 378 строк + header. Даты в формате `YYYY-MM-DD`.
+где:
+
+- $Close_t$ — цена закрытия индекса DJIA в день $t$;
+- $Close_{t-1}$ — цена закрытия индекса DJIA в предыдущий торговый день;
+- $r_t$ — дневная доходность индекса.
 
 ## Метрика
 
-**RMSE** (`sklearn.metrics.mean_squared_error(..., squared=False)`).
+Качество решения оценивается по метрике **RMSE**.
 
-```python
-from sklearn.metrics import mean_squared_error
-import numpy as np
-rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-```
+Чем меньше значение RMSE, тем лучше результат.
+
+## Формат решения
+
+Для каждой даты из тестовой выборки необходимо предсказать неотрицательное значение `abs_return`.
+
+Решение загружается на Kaggle в формате `submission.csv`.
 
 ## Оценивание
 
-Оценка ставится по Kaggle Public LB RMSE (чем меньше, тем лучше):
-
-| Оценка | RMSE |
-|---|---|
-| 5 | ≤ 0.0064 |
-| 4 | 0.0064 – 0.0065 |
-| 3 | 0.0065 – 0.0067 |
-| 2 | 0.0067 – 0.00720 |
-| 1 | 0.00720 – 0.00800 |
-| 0 | > 0.00800 / нет сабмишена |
+| Оценка | Значение RMSE |
+|---:|---:|
+| 5 | ≤ 0.00640 |
+| 4 | 0.00640–0.00650 |
+| 3 | 0.00650–0.00675 |
+| 2 | 0.00675–0.00720 |
+| 1 | 0.00720–0.00800 |
+| 0 | > 0.00800 или отсутствие сабмишена |
 
 ## Загрузка данных
 
 ```bash
-kaggle competitions download -c predict-djia-daily-returns-from-news-headlines-pfur -p data/news/contest
-unzip -qo data/news/contest/predict-djia-daily-returns-from-news-headlines-pfur.zip -d data/news/contest
-rm -f data/news/contest/predict-djia-daily-returns-from-news-headlines-pfur.zip
+kaggle competitions download -c predict-djia-daily-returns-from-news-headlines-pfur
 ```
